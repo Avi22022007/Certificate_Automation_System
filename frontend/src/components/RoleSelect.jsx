@@ -15,10 +15,9 @@ function RoleSelect() {
             👤 User Portal
           </button>
 
-          <button className="btn-success" disabled>
+          <button className="btn-success" onClick={() => navigate("/officer")}>
             🛡 Officer Portal
           </button>
-          <p className="role-note">Officer Portal arrives in release v1.1.0</p>
         </div>
       </div>
     </div>
