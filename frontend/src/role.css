@@ -1,0 +1,18 @@
+.role-card {
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.role-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: -6px 0 0;
+}
