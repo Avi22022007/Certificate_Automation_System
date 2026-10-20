@@ -11,6 +11,7 @@ const {
   INCOME_CERTIFICATES
 } = require("../services/certificateConfig");
 const { validateApplication } = require("../services/applicationValidator");
+const { assessApplication } = require("../services/ruleEngine");
 
 const router = express.Router();
 
@@ -41,10 +42,10 @@ const upload = multer({
 });
 
 function removeFiles(files = []) {
-  files.forEach((f) => fs.unlink(f.path, () => {}));
+  files.forEach((file) => fs.unlink(file.path, () => {}));
 }
 
-// Tells the frontend which documents each certificate needs
+// Tells the frontend which documents each certificate needs.
 router.get("/certificate-types", (req, res) => {
   res.json({
     requiredDocuments: REQUIRED_DOCUMENTS,
@@ -52,7 +53,7 @@ router.get("/certificate-types", (req, res) => {
   });
 });
 
-// Submit a new application
+// Submits an application and records advisory findings for officer review.
 router.post(
   "/applications",
   (req, res, next) => {
@@ -76,7 +77,7 @@ router.post(
 
       const allowedTypes = REQUIRED_DOCUMENTS[data.certificateType] || [];
       const invalidTypes = documentTypes.filter(
-        (t) => !allowedTypes.includes(t)
+        (type) => !allowedTypes.includes(type)
       );
       if (invalidTypes.length > 0) {
         errors.push(`Invalid document type(s): ${invalidTypes.join(", ")}`);
@@ -86,6 +87,27 @@ router.post(
         removeFiles(files);
         return res.status(400).json({ error: errors.join(". "), errors });
       }
+
+      const isDuplicate = Boolean(
+        await Certificate.exists({
+          email: data.email,
+          certificateType: data.certificateType
+        })
+      );
+
+      const documents = files.map((file, index) => ({
+        type: documentTypes[index],
+        originalName: file.originalname,
+        filename: file.filename
+      }));
+
+      const { riskScore, remarks } = assessApplication(
+        {
+          ...data,
+          documents
+        },
+        { isDuplicate }
+      );
 
       const applicant = await User.findOneAndUpdate(
         { email: data.email },
@@ -100,21 +122,22 @@ router.post(
         age: data.age,
         certificateType: data.certificateType,
         income: data.income,
-        documents: files.map((f, i) => ({
-          type: documentTypes[i],
-          originalName: f.originalname,
-          filename: f.filename
-        }))
+        documents,
+        status: "UNDER_REVIEW",
+        riskScore,
+        remarks
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Application submitted successfully",
-        id: certificate._id
+        id: certificate._id,
+        riskScore,
+        remarks
       });
     } catch (err) {
       console.error(err);
       removeFiles(files);
-      res.status(500).json({ error: "Failed to submit application" });
+      return res.status(500).json({ error: "Failed to submit application" });
     }
   }
 );
