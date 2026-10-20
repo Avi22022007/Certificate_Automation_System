@@ -9,6 +9,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import RoleSelect from "./components/RoleSelect";
 import ApplyForm from "./components/ApplyForm";
+import OfficerDashboard from "./components/OfficerDashboard";
+import OfficerView from "./components/OfficerView";
 
 function AnimatedPage({ children }) {
   return (
@@ -42,6 +44,22 @@ function AnimatedRoutes() {
           element={
             <AnimatedPage>
               <ApplyForm />
+            </AnimatedPage>
+          }
+        />
+        <Route
+          path="/officer"
+          element={
+            <AnimatedPage>
+              <OfficerDashboard />
+            </AnimatedPage>
+          }
+        />
+        <Route
+          path="/officer/view/:id"
+          element={
+            <AnimatedPage>
+              <OfficerView />
             </AnimatedPage>
           }
         />
