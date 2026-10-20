@@ -90,7 +90,7 @@ router.post(
       const applicant = await User.findOneAndUpdate(
         { email: data.email },
         { $set: { name: data.name }, $setOnInsert: { role: "applicant" } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
       );
 
       const certificate = await Certificate.create({
