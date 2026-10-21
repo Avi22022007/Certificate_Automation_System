@@ -1,11 +1,18 @@
 jest.mock("../models/certificateModel", () => ({
   find: jest.fn(),
   findById: jest.fn(),
-  findOneAndUpdate: jest.fn()
+  findOneAndUpdate: jest.fn(),
+  updateOne: jest.fn()
+}));
+
+jest.mock("../models/verificationRecordModel", () => ({
+  find: jest.fn(),
+  create: jest.fn()
 }));
 
 const request = require("supertest");
 const Certificate = require("../models/certificateModel");
+const VerificationRecord = require("../models/verificationRecordModel");
 const app = require("../app");
 
 const VALID_ID = "507f1f77bcf86cd799439011";
@@ -14,6 +21,7 @@ function createQuery(result) {
   const query = {
     sort: jest.fn(() => query),
     select: jest.fn(() => query),
+    populate: jest.fn(() => query),
     lean: jest.fn().mockResolvedValue(result)
   };
 
@@ -22,7 +30,7 @@ function createQuery(result) {
 
 describe("Officer routes", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe("GET /api/officer/review-queue", () => {
@@ -47,6 +55,31 @@ describe("Officer routes", () => {
       expect(Certificate.find).toHaveBeenCalledWith({
         status: "UNDER_REVIEW"
       });
+    });
+  });
+
+  describe("GET /api/officer/history", () => {
+    it("returns verification records with populated certificate details", async () => {
+      const records = [
+        {
+          decision: "APPROVED",
+          officer: "Local demo officer (unverified)",
+          riskScoreAtDecision: 0,
+          remarks: "No risk factors detected",
+          certificate: {
+            name: "Test Applicant",
+            certificateType: "EWS"
+          }
+        }
+      ];
+
+      VerificationRecord.find.mockReturnValue(createQuery(records));
+
+      const res = await request(app).get("/api/officer/history");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.records).toEqual(records);
+      expect(VerificationRecord.find).toHaveBeenCalled();
     });
   });
 
@@ -104,15 +137,19 @@ describe("Officer routes", () => {
 
       expect(res.statusCode).toBe(400);
       expect(Certificate.findOneAndUpdate).not.toHaveBeenCalled();
+      expect(VerificationRecord.create).not.toHaveBeenCalled();
     });
 
-    it("allows an approval only when the application is UNDER_REVIEW", async () => {
+    it("saves the officer decision and a verification record", async () => {
       Certificate.findOneAndUpdate.mockReturnValue(
         createQuery({
           _id: VALID_ID,
-          status: "APPROVED"
+          status: "APPROVED",
+          riskScore: 25,
+          remarks: "Example advisory remark"
         })
       );
+      VerificationRecord.create.mockResolvedValue({});
 
       const res = await request(app)
         .post(`/api/officer/applications/${VALID_ID}/decision`)
@@ -124,6 +161,15 @@ describe("Officer routes", () => {
         { _id: VALID_ID, status: "UNDER_REVIEW" },
         { $set: { status: "APPROVED" } },
         { new: true, runValidators: true }
+      );
+      expect(VerificationRecord.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          certificate: VALID_ID,
+          decision: "APPROVED",
+          officer: "Local demo officer (unverified)",
+          riskScoreAtDecision: 25,
+          remarks: "Example advisory remark"
+        })
       );
     });
 
@@ -139,6 +185,7 @@ describe("Officer routes", () => {
 
       expect(res.statusCode).toBe(409);
       expect(res.body.error).toMatch(/Decision is locked/);
+      expect(VerificationRecord.create).not.toHaveBeenCalled();
     });
 
     it("returns 404 when the application does not exist", async () => {
@@ -150,6 +197,31 @@ describe("Officer routes", () => {
         .send({ decision: "REJECTED" });
 
       expect(res.statusCode).toBe(404);
+    });
+
+    it("restores UNDER_REVIEW if the verification record cannot be saved", async () => {
+      Certificate.findOneAndUpdate.mockReturnValue(
+        createQuery({
+          _id: VALID_ID,
+          status: "REJECTED",
+          riskScore: 30,
+          remarks: "Example remark"
+        })
+      );
+      VerificationRecord.create.mockRejectedValue(
+        new Error("Simulated history write failure")
+      );
+      Certificate.updateOne.mockResolvedValue({ modifiedCount: 1 });
+
+      const res = await request(app)
+        .post(`/api/officer/applications/${VALID_ID}/decision`)
+        .send({ decision: "REJECTED" });
+
+      expect(res.statusCode).toBe(500);
+      expect(Certificate.updateOne).toHaveBeenCalledWith(
+        { _id: VALID_ID, status: "REJECTED" },
+        { $set: { status: "UNDER_REVIEW" } }
+      );
     });
   });
 });

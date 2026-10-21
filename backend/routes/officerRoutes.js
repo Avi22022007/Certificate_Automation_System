@@ -3,9 +3,11 @@ const mongoose = require("mongoose");
 const path = require("path");
 
 const Certificate = require("../models/certificateModel");
+const VerificationRecord = require("../models/verificationRecordModel");
 
 const router = express.Router();
 const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
+const DEMO_OFFICER_LABEL = "Local demo officer (unverified)";
 
 function isValidId(id) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -23,6 +25,24 @@ router.get("/review-queue", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Failed to load review queue" });
+  }
+});
+
+// Lists recorded officer decisions, newest first.
+router.get("/history", async (req, res) => {
+  try {
+    const records = await VerificationRecord.find()
+      .sort({ decidedAt: -1 })
+      .populate({
+        path: "certificate",
+        select: "name email certificateType"
+      })
+      .lean();
+
+    return res.json({ records });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to load decision history" });
   }
 });
 
@@ -76,9 +96,10 @@ router.get("/applications/:id/documents/:filename", async (req, res) => {
       if (err && !res.headersSent) {
         console.error(err);
         res.status(err.statusCode === 404 ? 404 : 500).json({
-          error: err.statusCode === 404
-            ? "Document file not found"
-            : "Failed to open document"
+          error:
+            err.statusCode === 404
+              ? "Document file not found"
+              : "Failed to open document"
         });
       }
     });
@@ -121,8 +142,33 @@ router.post("/applications/:id/decision", async (req, res) => {
       }
 
       return res.status(409).json({
-        error: "Decision is locked because this application is no longer under review"
+        error:
+          "Decision is locked because this application is no longer under review"
       });
+    }
+
+    try {
+      await VerificationRecord.create({
+        certificate: application._id,
+        decision,
+        officer: DEMO_OFFICER_LABEL,
+        riskScoreAtDecision: application.riskScore || 0,
+        remarks: application.remarks || "",
+        decidedAt: new Date()
+      });
+    } catch (recordError) {
+      // Compensate if history could not be stored so the decision is not left
+      // without its required audit record.
+      try {
+        await Certificate.updateOne(
+          { _id: application._id, status: decision },
+          { $set: { status: "UNDER_REVIEW" } }
+        );
+      } catch (rollbackError) {
+        console.error("Could not restore review status:", rollbackError);
+      }
+
+      throw recordError;
     }
 
     return res.json({
@@ -134,7 +180,7 @@ router.post("/applications/:id/decision", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Failed to save decision" });
+    return res.status(500).json({ error: "Failed to save decision and history" });
   }
 });
 
