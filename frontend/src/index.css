@@ -220,6 +220,11 @@ button:disabled {
   gap: 6px;
 }
 
+.history-grid .officer-grid-header,
+.history-grid .officer-grid-row {
+  grid-template-columns: 1.1fr 0.9fr 0.8fr 1.5fr 0.8fr 2fr;
+}
+
 .officer-grid-header {
   margin-bottom: 6px;
 }
@@ -351,6 +356,13 @@ button:disabled {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.56);
   line-height: 1.55;
+}
+
+.history-date {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .officer-document-list {

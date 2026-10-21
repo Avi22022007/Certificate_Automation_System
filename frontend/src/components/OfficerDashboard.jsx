@@ -48,13 +48,21 @@ function OfficerDashboard() {
             </p>
           </div>
 
-          <button
-            className="btn-primary officer-refresh"
-            onClick={loadApplications}
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </button>
+          <div>
+            <button
+              className="btn-primary"
+              onClick={() => navigate("/officer/history")}
+            >
+              Decision History
+            </button>
+            <button
+              className="btn-primary officer-refresh"
+              onClick={loadApplications}
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Refresh"}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -76,7 +84,11 @@ function OfficerDashboard() {
               </div>
 
               {applications.map((application) => (
-                <div className="officer-grid-row" role="row" key={application._id}>
+                <div
+                  className="officer-grid-row"
+                  role="row"
+                  key={application._id}
+                >
                   <div className="officer-cell" role="cell">
                     <span className="officer-mobile-label">Name</span>
                     <span>{application.name}</span>
