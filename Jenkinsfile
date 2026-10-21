@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        PATH+DOCKER = 'C:\\Users\\avied\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin'
+    }
+
     triggers {
         pollSCM('H/1 * * * *')
     }
