@@ -18,6 +18,10 @@ function RoleSelect() {
           <button className="btn-success" onClick={() => navigate("/officer")}>
             🛡 Officer Portal
           </button>
+
+          <button className="btn-primary" onClick={() => navigate("/admin")}>
+            ⚙ Admin Portal
+          </button>
         </div>
       </div>
     </div>

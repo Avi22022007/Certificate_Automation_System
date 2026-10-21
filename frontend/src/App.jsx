@@ -12,6 +12,7 @@ import ApplyForm from "./components/ApplyForm";
 import OfficerDashboard from "./components/OfficerDashboard";
 import OfficerView from "./components/OfficerView";
 import OfficerHistory from "./components/OfficerHistory";
+import AdminOverview from "./components/AdminOverview";
 
 function AnimatedPage({ children }) {
   return (
@@ -69,6 +70,14 @@ function AnimatedRoutes() {
           element={
             <AnimatedPage>
               <OfficerView />
+            </AnimatedPage>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AnimatedPage>
+              <AdminOverview />
             </AnimatedPage>
           }
         />
