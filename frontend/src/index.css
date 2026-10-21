@@ -404,6 +404,110 @@ button:disabled {
   text-decoration: none;
 }
 
+/* Read-only admin overview */
+.admin-demo-note {
+  padding: 12px 14px;
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--muted);
+}
+
+.admin-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-sections > .officer-detail-section {
+  min-width: 0;
+  margin-top: 10px;
+}
+
+.admin-sections > .officer-detail-section:last-child {
+  grid-column: 1 / -1;
+}
+
+.admin-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-user {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(180px, 1.5fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(71, 85, 105, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  overflow-wrap: anywhere;
+}
+
+.admin-certificate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.admin-certificate {
+  padding: 14px;
+  border: 1px solid rgba(71, 85, 105, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.admin-certificate h3 {
+  margin: 0 0 10px;
+}
+
+.admin-certificate p {
+  margin: 7px 0 0;
+  line-height: 1.45;
+}
+
+.admin-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-rule-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 12px;
+  border: 1px solid rgba(71, 85, 105, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.admin-rule-list li strong {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #3730a3;
+  background: #e0e7ff;
+}
+
+.admin-assumption {
+  padding: 14px;
+  border: 1px solid rgba(71, 85, 105, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+}
+
+.admin-assumption span {
+  color: var(--muted);
+}
+
 .officer-decision-actions {
   display: flex;
   justify-content: flex-end;
@@ -500,6 +604,19 @@ button:disabled {
 
   .officer-details {
     grid-template-columns: 1fr;
+  }
+
+  .admin-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sections > .officer-detail-section:last-child {
+    grid-column: auto;
+  }
+
+  .admin-user {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .officer-document-list li {
