@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        PATH+DOCKER = 'C:\\Users\\avied\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin'
-    }
-
     triggers {
         pollSCM('H/1 * * * *')
     }
@@ -44,9 +40,11 @@ pipeline {
 
         stage('Docker build') {
             steps {
-                bat 'docker --version'
-                bat 'docker build -t certificate-backend:v1.3.0 backend'
-                bat 'docker build --build-arg VITE_API_URL=/api -t certificate-frontend:v1.3.0 frontend'
+                withEnv(["PATH+DOCKER=C:\\Users\\avied\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin"]) {
+                    bat 'docker --version'
+                    bat 'docker build -t certificate-backend:v1.3.0 backend'
+                    bat 'docker build --build-arg VITE_API_URL=/api -t certificate-frontend:v1.3.0 frontend'
+                }
             }
         }
     }
